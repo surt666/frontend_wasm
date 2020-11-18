@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 wasm-bindgen-test = "0.3.13"
 
 [dependencies]
-seed = "0.7.0"
+seed = "0.8.0"
 chrono = "0.4.15"
 ulid = "0.4.0"
 serde = "1.0.115"
