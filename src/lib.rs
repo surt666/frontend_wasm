@@ -4,6 +4,7 @@ use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
 mod page;
+mod common;
 
 const USERS: &str = "users";
 const DATASETS: &str = "datasets";
