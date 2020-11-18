@@ -3,8 +3,8 @@
 use seed::{prelude::*, *};
 use serde::{Deserialize, Serialize};
 
-mod page;
 mod common;
+mod page;
 
 const USERS: &str = "users";
 const DATASETS: &str = "datasets";
@@ -17,11 +17,11 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders
         .subscribe(Msg::UrlChanged)
         .stream(streams::window_event(Ev::Click, |_| Msg::HideMenu));
-        // .perform_cmd(async { 
-        //     Msg::AuthConfigFetched(
-        //         async { fetch("/auth_config.json").await?.check_status()?.json().await }.await
-        //     )
-        // });
+    // .perform_cmd(async {
+    //     Msg::AuthConfigFetched(
+    //         async { fetch("/auth_config.json").await?.check_status()?.json().await }.await
+    //     )
+    // });
 
     Model {
         ctx: Context {
@@ -32,7 +32,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         page: Page::init(url, orders),
         menu_visible: false,
         auth_config: None,
-//	datasets: vec!["c4c".to_string(), "test".to_string()],
+        //	datasets: vec!["c4c".to_string(), "test".to_string()],
     }
 }
 
@@ -47,7 +47,6 @@ struct Model {
     menu_visible: bool,
     auth_config: Option<AuthConfig>,
 }
-
 
 struct Context {
     user: Option<User>,
@@ -75,17 +74,15 @@ enum Page {
     NotFound,
 }
 
-
 impl Page {
     fn init(mut url: Url, orders: &mut impl Orders<Msg>) -> Self {
         match url.remaining_path_parts().as_slice() {
             [] => Self::Home,
-            [USERS] => Self::Users(
-                page::users::init(url, &mut orders.proxy(Msg::UsersPage))
-            ),
-            [DATASETS] => Self::Datasets(
-                page::datasets::init(url, &mut orders.proxy(Msg::DatasetsPage))
-            ),
+            [USERS] => Self::Users(page::users::init(url, &mut orders.proxy(Msg::UsersPage))),
+            [DATASETS] => Self::Datasets(page::datasets::init(
+                url,
+                &mut orders.proxy(Msg::DatasetsPage),
+            )),
             _ => Self::NotFound,
         }
     }
@@ -120,25 +117,25 @@ enum Msg {
 
 fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     match msg {
-	Msg::UrlChanged(subs::UrlChanged(url)) => model.page = Page::init(url, orders),
-	Msg::UsersPage(msg) => {
+        Msg::UrlChanged(subs::UrlChanged(url)) => model.page = Page::init(url, orders),
+        Msg::UsersPage(msg) => {
             if let Page::Users(model) = &mut model.page {
                 page::users::update(msg, model, &mut orders.proxy(Msg::UsersPage))
             }
-        },
+        }
         Msg::DatasetsPage(msg) => {
-            if let Page::Datasets(model) = &mut  model.page {
+            if let Page::Datasets(model) = &mut model.page {
                 page::datasets::update(msg, model, &mut orders.proxy(Msg::DatasetsPage))
             }
-        },
-	Msg::ToggleMenu => model.menu_visible = not(model.menu_visible),
+        }
+        Msg::ToggleMenu => model.menu_visible = not(model.menu_visible),
         Msg::HideMenu => {
             if model.menu_visible {
                 model.menu_visible = false;
             } else {
                 orders.skip();
             }
-        },
+        }
         // Msg::AuthConfigFetched(Ok(auth_config)) => {
         //     let domain = auth_config.domain.clone();
         //     let client_id = auth_config.client_id.clone();
@@ -158,7 +155,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         //     }
 
         //     let search = model.base_url.search_mut();
-        //     if search.remove("code").is_some() && search.remove("state").is_some() {        
+        //     if search.remove("code").is_some() && search.remove("state").is_some() {
         //         model.base_url.go_and_replace();
         //     }
         // }
@@ -169,25 +166,47 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 fn view(model: &Model) -> Node<Msg> {
-    div![C!["grid grid-cols-12 xl:w-full"],
-	 div![C!["col-start-1 xl:col-end-13 bg-blue-500 text-white"], "Administration"],
-	 view_navbar(model.menu_visible, &model.base_url, model.ctx.user.as_ref(), &model.page),
-	 view_content(&model.page, &model.base_url),
+    div![
+        C!["grid grid-cols-12 xl:w-full"],
+        div![
+            C!["col-start-1 xl:col-end-13 bg-blue-500 text-white"],
+            "Administration"
+        ],
+        view_navbar(
+            model.menu_visible,
+            &model.base_url,
+            model.ctx.user.as_ref(),
+            &model.page
+        ),
+        view_content(&model.page, &model.base_url),
     ]
 }
 
 fn view_navbar(menu_visible: bool, base_url: &Url, user: Option<&User>, page: &Page) -> Node<Msg> {
-    nav![C!["bg-gray-200 col-start-1 h-screen border-2 border-gray-600"],
-	 div![C!["px-8 py-2"], a![
-	     C!["navbar-item", IF!(matches!(page, Page::Users(_)) => "is-active"),],
-             attrs!{At::Href => Urls::new(base_url).users()},
-             "Users",
-	 ]],
-	 div![C!["px-8 py-2"], a![
-	      C!["navbar-item", IF!(matches!(page, Page::Datasets(_)) => "is-active"),],
-             attrs!{At::Href => Urls::new(base_url).datasets()},
-             "Datasets",
-	 ]]
+    nav![
+        C!["bg-gray-200 col-start-1 h-screen border-2 border-gray-600"],
+        div![
+            C!["px-8 py-2"],
+            a![
+                C![
+                    "navbar-item",
+                    IF!(matches!(page, Page::Users(_)) => "is-active"),
+                ],
+                attrs! {At::Href => Urls::new(base_url).users()},
+                "Users",
+            ]
+        ],
+        div![
+            C!["px-8 py-2"],
+            a![
+                C![
+                    "navbar-item",
+                    IF!(matches!(page, Page::Datasets(_)) => "is-active"),
+                ],
+                attrs! {At::Href => Urls::new(base_url).datasets()},
+                "Datasets",
+            ]
+        ]
     ]
 }
 
@@ -195,7 +214,7 @@ fn view_content(page: &Page, base_url: &Url) -> Node<Msg> {
     match page {
         Page::Home => page::home::view(base_url),
         Page::Users(model) => page::users::view(model).map_msg(Msg::UsersPage),
-        Page::Datasets(model) => page::datasets::view(model).map_msg(Msg::DatasetsPage),            
+        Page::Datasets(model) => page::datasets::view(model).map_msg(Msg::DatasetsPage),
         Page::NotFound => page::not_found::view(),
     }
 }
@@ -207,7 +226,7 @@ fn init_auth(user: String) -> Result<String, String> {
 #[wasm_bindgen(start)]
 pub fn render() {
     App::start("app", init, update, view);
-   // App::builder(update, view)
-        //	.after_mount(after_mount)
-   //     .build_and_start();
+    // App::builder(update, view)
+    //	.after_mount(after_mount)
+    //     .build_and_start();
 }
