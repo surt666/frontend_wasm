@@ -169,7 +169,7 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Node<Msg> {
     div![C!["grid grid-cols-12 xl:w-full"],
-	 div![C!["col-start-1 xl:col-end-13 bg-blue-500 text-white"], "NNEDL Administration"],
+	 div![C!["col-start-1 xl:col-end-13 bg-blue-500 text-white"], "Administration"],
 	 view_navbar(model.menu_visible, &model.base_url, model.ctx.user.as_ref(), &model.page),
 	 view_content(&model.page, &model.base_url),
     ]
