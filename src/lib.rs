@@ -67,7 +67,7 @@ struct AuthConfig {
     client_id: String,
 }
 
-enum Page {
+pub enum Page {
     Home,
     Users(page::users::Model),
     Datasets(page::datasets::Model),
@@ -166,47 +166,19 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 }
 
 fn view(model: &Model) -> Node<Msg> {
+    let u = Page::Users(page::users::Model {..Default::default()});
+    let d = Page::Datasets(page::datasets::Model {..Default::default()}); 
+    let u_url = Urls::new(&model.base_url).users();
+    let d_url = Urls::new(&model.base_url).datasets();
+    let pages = vec![(&u, &u_url, "Users"), (&d, &d_url, "Datasets")];
     div![
         C!["grid grid-cols-12 xl:w-full"],
         div![
             C!["col-start-1 xl:col-end-13 bg-blue-500 text-white"],
             "Administration"
         ],
-        view_navbar(
-            model.menu_visible,
-            &model.base_url,
-            model.ctx.user.as_ref(),
-            &model.page
-        ),
+	common::common::navbar(model.menu_visible, &model.base_url, &model.page, pages),
         view_content(&model.page, &model.base_url),
-    ]
-}
-
-fn view_navbar(menu_visible: bool, base_url: &Url, user: Option<&User>, page: &Page) -> Node<Msg> {
-    nav![
-        C!["bg-gray-200 col-start-1 h-screen border-2 border-gray-600"],
-        div![
-            C!["px-8 py-2"],
-            a![
-                C![
-                    "navbar-item",
-                    IF!(matches!(page, Page::Users(_)) => "is-active"),
-                ],
-                attrs! {At::Href => Urls::new(base_url).users()},
-                "Users",
-            ]
-        ],
-        div![
-            C!["px-8 py-2"],
-            a![
-                C![
-                    "navbar-item",
-                    IF!(matches!(page, Page::Datasets(_)) => "is-active"),
-                ],
-                attrs! {At::Href => Urls::new(base_url).datasets()},
-                "Datasets",
-            ]
-        ]
     ]
 }
 

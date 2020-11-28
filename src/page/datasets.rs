@@ -15,9 +15,9 @@ pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 //     Model
 // ------ ------
-
+#[derive(Default, Debug)]
 pub struct Model {
-    accordion: HashMap<String, String>,
+    pub accordion: HashMap<String, String>,
 }
 
 // ------ ------

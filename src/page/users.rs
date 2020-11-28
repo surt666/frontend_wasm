@@ -16,12 +16,12 @@ pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
 // ------ ------
 //     Model
 // ------ ------
-
+#[derive(Default, Debug)]
 pub struct Model {
-    users: Vec<String>,
-    dataset: String,
-    dataset_users: Vec<String>,
-    user: Option<String>,
+    pub users: Vec<String>,
+    pub dataset: String,
+    pub dataset_users: Vec<String>,
+    pub user: Option<String>,
 }
 
 // ------ ------
