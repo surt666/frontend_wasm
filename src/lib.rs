@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 mod common;
 mod page;
+mod data_struct;
 
 const USERS: &str = "users";
 const DATASETS: &str = "datasets";
@@ -32,7 +33,6 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         page: Page::init(url, orders),
         menu_visible: false,
         auth_config: None,
-        //	datasets: vec!["c4c".to_string(), "test".to_string()],
     }
 }
 
@@ -167,10 +167,12 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 fn view(model: &Model) -> Node<Msg> {
     let u = Page::Users(page::users::Model {..Default::default()});
-    let d = Page::Datasets(page::datasets::Model {..Default::default()}); 
+    let d = Page::Datasets(page::datasets::Model {..Default::default()});
+    let h = Page::Home;
+    let h_url = Urls::new(&model.base_url).home();
     let u_url = Urls::new(&model.base_url).users();
     let d_url = Urls::new(&model.base_url).datasets();
-    let pages = vec![(&u, &u_url, "Users"), (&d, &d_url, "Datasets")];
+    let pages = vec![(&h, &h_url, "Home"), (&u, &u_url, "Users"), (&d, &d_url, "Datasets")];
     div![
         C!["grid grid-cols-12 xl:w-full"],
         div![

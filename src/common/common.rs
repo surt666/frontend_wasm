@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use crate::{Page};
 
 pub fn accordion<T>(
-    id: &'static str, title: &str, content: Node<T>, accordion: &HashMap<String, String>,
+    id: String, title: String, content: Node<T>, accordion: &HashMap<String, String>,
     show: &'static dyn Fn(String) -> T,
 ) -> Node<T> {
+    let id2 = id.clone();
     div![
         C!["rounded-sm"],
         div![
@@ -18,7 +19,7 @@ pub fn accordion<T>(
         ],
         div![
             C!["border border-b-0 px-10 py-6"],
-            attrs! {At::Class => accordion.get(id).unwrap_or(&"hidden".to_string())},
+            attrs! {At::Class => accordion.get(&id2).unwrap_or(&"hidden".to_string())},
             content]
     ]
 }
@@ -48,4 +49,14 @@ pub fn navbar<T>(menu_visible: bool, base_url: &Url, page: &Page, pages: Vec<(&P
 		]}).
 		collect::<Vec<Node<T>>>()
     ]
+}
+
+pub fn modal<T>(content: Node<T>) -> Node<T> {
+    div![C!["fixed z-10 inset-0 overflow-y-auto"], 
+	     div![C!["flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"],
+		  div![C!["fixed inset-0 transition-opacity"],
+		       div![C!["absolute inset-0 bg-gray-500 opacity-75"]],
+		       span![C!["hidden sm:inline-block sm:align-middle sm:h-screen", "&#8203;"]],
+		       div![C!["inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"],
+			    content]]]]
 }
