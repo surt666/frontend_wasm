@@ -106,7 +106,8 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             if term== "" {
                 model.dataset_search_list = model.datasets.clone();
             } else {
-                model.dataset_search_list = model.datasets.iter().filter(move |x| x.name == term).map(|y| y.clone()).collect();
+                
+                model.dataset_search_list = model.datasets.iter().filter(move |x| x.name.chars().into_iter().take(term.len()).collect::<String>() == term).map(|y| y.clone()).collect();
             }
         }
     }
