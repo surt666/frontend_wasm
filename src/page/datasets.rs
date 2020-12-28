@@ -27,7 +27,8 @@ pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
         datasets: ds.clone(),
         add_dataset_modal: false,
         new_dataset: Dataset{..Default::default()},
-        dataset_search_list: ds,
+        dataset_search_result: ds.clone(),
+        search_list: ds.into_iter().map(|x| x.name.clone()).collect(),
     }
 }
 
@@ -38,9 +39,10 @@ pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
 pub struct Model {
     pub accordion: HashMap<String, String>,
     pub datasets: Vec<Dataset>,
-    pub dataset_search_list: Vec<Dataset>,
+    pub dataset_search_result: Vec<Dataset>,
     pub add_dataset_modal: bool,
     pub new_dataset: Dataset,
+    pub search_list: Vec<String>,
 }
 
 // ------ ------
@@ -76,7 +78,7 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             let new_ds = model.new_dataset.clone();
             model.datasets.push(new_ds);
             model.new_dataset = Dataset {..Default::default()};
-            model.dataset_search_list= model.datasets.clone();
+            model.dataset_search_result= model.datasets.clone();
             model.add_dataset_modal = false;
         },
         Msg::UpdateField(k, v) => {
@@ -103,11 +105,16 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         },
         Msg::ChooseSearchTerm(term) => {
             log!("TERM {}", term);
-            if term== "" {
-                model.dataset_search_list = model.datasets.clone();
-            } else {
-                
-                model.dataset_search_list = model.datasets.iter().filter(move |x| x.name.chars().into_iter().take(term.len()).collect::<String>() == term).map(|y| y.clone()).collect();
+            let sep = " ".to_string();
+            if term.chars().last().unwrap().to_string() == sep {
+                let new_term = term.split(",").nth(0).unwrap();
+                let new_list = model.search_list.iter().filter(|x| x != &new_term).map(|y| format!("{}{}{}",new_term, sep, y.to_string())).collect();
+                model.search_list = new_list;
+            };
+            if term == "" {
+                model.dataset_search_result = model.datasets.clone();
+            } else {  
+                model.dataset_search_result = model.datasets.iter().filter(move |x| x.name.chars().into_iter().take(term.len()).collect::<String>() == term).map(|y| y.clone()).collect();
             }
         }
     }
@@ -116,7 +123,7 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
 fn generate_dataset_node(model: &Model) -> Vec<Node<Msg>> {
     let mut view_datasets: Vec<Node<Msg>> = vec![];
     let mut count: i32 = 0;
-    for d in &model.dataset_search_list {
+    for d in &model.dataset_search_result {
         count = count + 1;
         let id = count.to_string(); 
         let content: Node<Msg> = div![
@@ -184,10 +191,9 @@ fn choose(term: String) -> Msg {
 
 pub fn view(model: &Model) -> Node<Msg> {
     let ds = generate_dataset_node(model);
-    let ds_modal_content = generate_add_dataset_form(model);
-    let list = model.datasets.iter().map(|x| x.name.clone()).collect(); 
+    let ds_modal_content = generate_add_dataset_form(model); 
     div![C!["col-span-11"],
-        search_box(list, &choose),
+        search_box(&model.search_list, &choose),
         IF!(model.add_dataset_modal => modal(div![ds_modal_content])),
         div![C!["m-2 grid row-span-1 center"], div![C!["text-xl m-3 col-start-1"], "My Datasets"], button![C!["bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full col-start-11"], ev(Ev::Click, |_| Msg::AddDataset), "+"]],
         div![

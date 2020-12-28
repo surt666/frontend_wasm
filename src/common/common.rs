@@ -61,9 +61,9 @@ pub fn modal<T>(content: Node<T>) -> Node<T> {
 			    content]]]]
 }
 
-pub fn search_box<T>(list: Vec<String>, choose: &'static dyn Fn(String) -> T) -> Node<T> {
+pub fn search_box<T>(list: &Vec<String>, choose: &'static dyn Fn(String) -> T) -> Node<T> {
     div![C!["grid cols-5"],
-        input![C!["border p-1 m-3"], attrs!{"list" => "search_list", "placeholder" => "Search"}, input_ev(Ev::Change, move |term| choose(term))],
+        input![C!["border p-1 m-3"], attrs!{"list" => "search_list", "placeholder" => "Search", "multiple" => "multiple"}, input_ev(Ev::Change, move |term| choose(term))],
         datalist![attrs!{At::Id => "search_list"},
             construct_select_list(&list),
         ]
