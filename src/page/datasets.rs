@@ -106,7 +106,7 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
         Msg::ChooseSearchTerm(term) => {
             log!("TERM {}", term);
             let sep = " ".to_string();
-            if term.chars().last().unwrap().to_string() == sep {
+            if term.chars().last().unwrap_or('d').to_string() == sep {
                 let new_term = term.split(&sep).nth(0).unwrap();
                 model.search_list = model.search_list.iter().filter(|x| x != &new_term).map(|y| format!("{}{}{}",new_term, sep, y.to_string())).collect();
             };
