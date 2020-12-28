@@ -1,4 +1,4 @@
-use crate::common::common::{accordion, modal, construct_select_list};
+use crate::common::common::{accordion, modal, construct_select_list, search_box};
 use seed::{prelude::*, *};
 use std::collections::HashMap;
 use crate::data_struct::*;
@@ -10,22 +10,24 @@ use std::str::FromStr;
 // ------ ------
 
 pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
+    let ds = vec![
+        Dataset{
+            name: "c4c".to_owned(),
+            owner: "sla".to_owned(),
+            ..Default::default()
+        },
+        Dataset{
+            name: "aact".to_owned(),
+            owner: "sla".to_owned(),
+            ..Default::default()
+        },
+    ];
     Model {
         accordion: HashMap::new(),
-        datasets: vec![
-            Dataset{
-                name: "c4c".to_owned(),
-                owner: "sla".to_owned(),
-                ..Default::default()
-            },
-            Dataset{
-                name: "aact".to_owned(),
-                owner: "sla".to_owned(),
-                ..Default::default()
-            },
-        ],
+        datasets: ds.clone(),
         add_dataset_modal: false,
         new_dataset: Dataset{..Default::default()},
+        dataset_search_list: ds,
     }
 }
 
@@ -36,6 +38,7 @@ pub fn init(url: Url, _: &mut impl Orders<Msg>) -> Model {
 pub struct Model {
     pub accordion: HashMap<String, String>,
     pub datasets: Vec<Dataset>,
+    pub dataset_search_list: Vec<Dataset>,
     pub add_dataset_modal: bool,
     pub new_dataset: Dataset,
 }
@@ -50,10 +53,7 @@ pub enum Msg {
     CancelDataset,
     CreateDataset,
     UpdateField(String, String),
-}
-
-fn show(id: String) -> Msg {
-    Msg::ShowAccordion(id)
+    ChooseSearchTerm(String),
 }
 
 pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
@@ -76,10 +76,11 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             let new_ds = model.new_dataset.clone();
             model.datasets.push(new_ds);
             model.new_dataset = Dataset {..Default::default()};
+            model.dataset_search_list= model.datasets.clone();
             model.add_dataset_modal = false;
         },
         Msg::UpdateField(k, v) => {
-            //log!("Update {} {}", k.clone(), v.clone());
+            log!("Update {} {}", k.clone(), v.clone());
             let key = k.as_ref();
             match key {
                 "name" => model.new_dataset.name = v,
@@ -100,24 +101,40 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
                 _ => ()
             };
         },
+        Msg::ChooseSearchTerm(term) => {
+            log!("TERM {}", term);
+            if term== "" {
+                model.dataset_search_list = model.datasets.clone();
+            } else {
+                model.dataset_search_list = model.datasets.iter().filter(move |x| x.name == term).map(|y| y.clone()).collect();
+            }
+        }
     }
 }
 
 fn generate_dataset_node(model: &Model) -> Vec<Node<Msg>> {
     let mut view_datasets: Vec<Node<Msg>> = vec![];
     let mut count: i32 = 0;
-    for d in &model.datasets {
+    for d in &model.dataset_search_list {
         count = count + 1;
         let id = count.to_string(); 
         let content: Node<Msg> = div![
-            span![C!["block m-2"],label!["Name: "], label![&d.name]],
-            span![C!["block m-2"],label!["Owner: "], label![&d.owner]],
             span![C!["block m-2"],
-                label!["Managed: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.managed == &true).as_at_value()}],
-                label!["Financial: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.financial == &true).as_at_value()}],
-                label!["ESH: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.esh == &true).as_at_value()}],
-                label!["GxP: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.gxp == &true).as_at_value()}],
-                label!["PII: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.pii == &true).as_at_value()}],
+                label!["Managed: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.managed == &true).as_at_value(), "disabled" => "true"}],
+                label!["Financial: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.financial == &true).as_at_value(), "disabled" => "true"}],
+                label!["ESH: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.esh == &true).as_at_value(), "disabled" => "true"}],
+                label!["GxP: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.gxp == &true).as_at_value(), "disabled" => "true"}],
+                label!["PII: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => (&d.pii == &true).as_at_value(), "disabled" => "true"}],
+            span![C!["block m-2"],label![C!["m-2"],"Name:"], label![&d.name]],
+            span![C!["block m-2"],label![C!["m-2"],"Owner:"], label![&d.owner]],
+            span![C!["block m-2"],label![C!["m-2"],"Confidentiality level:"], label![&d.confidentiality.to_string()]],
+            span![C!["block m-2"],label![C!["m-2"],"Criticality:"], label![&d.criticality.to_string()]],
+            span![C!["block m-2"],label![C!["m-2"],"Region:"], label![&d.region.to_string()]],
+            span![C!["block m-2"],label![C!["m-2"],"Company:"], label![&d.company.clone().unwrap_or("".to_owned())]],
+            span![C!["block m-2"],label![C!["m-2"],"Domain:"], label![&d.domain.clone().unwrap_or("".to_owned())]],
+            span![C!["block m-2"],label![C!["m-2"],"Cost Center:"], label![&d.cost_center]],
+            span![C!["block m-2"],label![C!["m-2"],"Client account:"], label![&d.client_account]],
+            span![C!["block m-2"],label![C!["m-2"],"SNS Topic ARN:"], label![&d.sns_topic]],
             ],
         ];
         view_datasets.push(accordion(id, d.name.clone(), content, &model.accordion, &show));
@@ -132,11 +149,11 @@ fn generate_add_dataset_form(model: &Model) -> Node<Msg> {
     div![
         h1![C!["text-xl"], "New dataset"],
         span![C!["block m-2"],
-                label!["Managed: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.managed.as_at_value()}, input_ev(Ev::Change, move |v| Msg::UpdateField("managed".to_owned(), v))],
-                label!["Financial: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.financial.as_at_value()}, input_ev(Ev::Change, move |v| Msg::UpdateField("financial".to_owned(), v))],
-                label!["ESH: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.esh.as_at_value()}, input_ev(Ev::Change, move |v| Msg::UpdateField("esh".to_owned(), v))],
-                label!["GxP: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.gxp.as_at_value()}, input_ev(Ev::Change, move |v| Msg::UpdateField("gxp".to_owned(), v))],
-                label!["PII: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.pii.as_at_value()}], input_ev(Ev::Change, move |v| Msg::UpdateField("pii".to_owned(), v))],
+                label!["Managed: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.managed.as_at_value()}, input_ev(Ev::Input, move |v| Msg::UpdateField("managed".to_owned(), v))],
+                label!["Financial: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.financial.as_at_value()}, input_ev(Ev::Click, move |v| Msg::UpdateField("financial".to_owned(), v))],
+                label!["ESH: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.esh.as_at_value()}, input_ev(Ev::Click, move |v| Msg::UpdateField("esh".to_owned(), v))],
+                label!["GxP: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.gxp.as_at_value()}, input_ev(Ev::Click, move |v| Msg::UpdateField("gxp".to_owned(), v))],
+                label!["PII: "], input![C!["m-1"],attrs!{At::Type => "checkbox", At::Checked => model.new_dataset.pii.as_at_value()}, input_ev(Ev::Click, move |v| Msg::UpdateField("pii".to_owned(), v))]],
         span![C!["block m-2"],label!["Dataset name *:"], input![C!["m-2 border-2"], attrs!{At::Value => model.new_dataset.name}, input_ev(Ev::Input, move |v| Msg::UpdateField("name".to_owned(), v))]],
         span![C!["block m-2"],label!["Confidentiality level *:"], select![C!["m-2 border-2"], attrs!{At::Value => model.new_dataset.confidentiality}, construct_select_list(&confidentiality_options), input_ev(Ev::Input, move |v| Msg::UpdateField("confidentiality".to_owned(), v))]],
         span![C!["block m-2"],label!["Criticality *:"], select![C!["m-2 border-2"], attrs!{At::Value => model.new_dataset.criticality}, construct_select_list(&criticality_options), input_ev(Ev::Input, move |v| Msg::UpdateField("criticality".to_owned(), v))]],
@@ -156,11 +173,20 @@ fn generate_add_dataset_form(model: &Model) -> Node<Msg> {
 // ------ ------
 //     View
 // ------ ------
+fn show(id: String) -> Msg {
+    Msg::ShowAccordion(id)
+}
+
+fn choose(term: String) -> Msg {
+    Msg::ChooseSearchTerm(term)
+}
 
 pub fn view(model: &Model) -> Node<Msg> {
     let ds = generate_dataset_node(model);
     let ds_modal_content = generate_add_dataset_form(model);
+    let list = model.datasets.iter().map(|x| x.name.clone()).collect(); 
     div![C!["col-span-11"],
+        search_box(list, &choose),
         IF!(model.add_dataset_modal => modal(div![ds_modal_content])),
         div![C!["m-2 grid row-span-1 center"], div![C!["text-xl m-3 col-start-1"], "My Datasets"], button![C!["bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full col-start-11"], ev(Ev::Click, |_| Msg::AddDataset), "+"]],
         div![

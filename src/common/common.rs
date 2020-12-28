@@ -60,3 +60,12 @@ pub fn modal<T>(content: Node<T>) -> Node<T> {
 		       div![C!["inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"],
 			    content]]]]
 }
+
+pub fn search_box<T>(list: Vec<String>, choose: &'static dyn Fn(String) -> T) -> Node<T> {
+    div![C!["grid cols-5"],
+        input![C!["border p-1 m-3"], attrs!{"list" => "search_list"}, input_ev(Ev::Change, move |term| choose(term))],
+        datalist![attrs!{At::Id => "search_list"},
+            construct_select_list(&list),
+        ]
+    ]
+} 
