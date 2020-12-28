@@ -107,9 +107,8 @@ pub fn update(msg: Msg, model: &mut Model, _: &mut impl Orders<Msg>) {
             log!("TERM {}", term);
             let sep = " ".to_string();
             if term.chars().last().unwrap().to_string() == sep {
-                let new_term = term.split(",").nth(0).unwrap();
-                let new_list = model.search_list.iter().filter(|x| x != &new_term).map(|y| format!("{}{}{}",new_term, sep, y.to_string())).collect();
-                model.search_list = new_list;
+                let new_term = term.split(&sep).nth(0).unwrap();
+                model.search_list = model.search_list.iter().filter(|x| x != &new_term).map(|y| format!("{}{}{}",new_term, sep, y.to_string())).collect();
             };
             if term == "" {
                 model.dataset_search_result = model.datasets.clone();
